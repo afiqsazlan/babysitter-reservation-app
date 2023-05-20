@@ -2,6 +2,7 @@
 
 import dayjs from 'dayjs';
 import {reactive} from "vue";
+import axios from "axios";
 
 interface Form {
   name: string;
@@ -33,8 +34,25 @@ const form: Form = reactive({
   ]
 });
 
-function handleSubmit() {
+async function handleSubmit() {
   console.log(form);
+
+
+  axios.defaults.withCredentials = true;
+
+  const apiBaseUrl = import.meta.env.VITE_API_BASE;
+  const apiUrl = `${apiBaseUrl}/api`
+
+   await axios.get(`${apiBaseUrl}/sanctum/csrf-cookie`);
+
+  try {
+    const response = await axios.post(`${apiUrl}/reservations`);
+    console.log({response})
+    return response.data;
+  } catch (error) {
+    console.error('Error', error.response.data);
+    throw error;
+  }
 }
 
 function addChild() {
