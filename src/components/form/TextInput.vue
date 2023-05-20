@@ -1,5 +1,7 @@
 <script setup lang="ts">
 
+import ErrorMessage from "@/components/form/ErrorMessage.vue";
+
 interface Props {
   modelValue: string
   label: string
@@ -13,9 +15,9 @@ defineEmits(['update:modelValue'])
 </script>
 
 <template>
-  <div class="flex flex-col space-y-2">
+  <div class="flex flex-col">
     <label :for="name"
-           class="text-stale-400 px-1"
+           class="text-stale-400 px-1 mb-2"
     >
       {{ label }}
     </label>
@@ -23,11 +25,14 @@ defineEmits(['update:modelValue'])
            :value="modelValue"
            :type="type || 'text'"
            @input="$emit('update:modelValue', $event.target.value)"
-           class="border border-stale-400 rounded-lg py-3 px-3 "
+           class="border border-stale-400 rounded-lg py-2 px-3 "
     />
 
     <!--  Error message -->
-    <p v-if="error" class="text-red-500 text-sm">{{ error }}</p>
+    <error-message v-if="error"
+                   :error="error"
+                   class="mt-1"
+    ></error-message>
   </div>
 </template>
 

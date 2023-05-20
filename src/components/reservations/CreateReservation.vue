@@ -4,6 +4,10 @@ import dayjs from 'dayjs';
 import {reactive, ref} from "vue";
 import axios from "axios";
 import TextInput from "@/components/form/TextInput.vue";
+import VueDatePicker from '@vuepic/vue-datepicker';
+import '@vuepic/vue-datepicker/dist/main.css'
+import ErrorMessage from "@/components/form/ErrorMessage.vue";
+import FormGroup from "@/components/form/FormGroup.vue";
 
 interface Form {
   customer_name: string;
@@ -50,6 +54,19 @@ const form: Form = reactive({
     }
   ]
 });
+
+const childrenDateOfBirthDatepickerConfig = {
+  min_date: now.subtract(13, "years").toDate(),
+  max_date: now.subtract(1, "month").subtract(1, "day").toDate(),
+  preselected_date: now.subtract(1, "month").subtract(1, "day").toDate(),
+  year_range: [now.subtract(13, "years").year(), now.year()]
+}
+
+const reservationDatepickerConfig = {
+  min_date: now.toDate(),
+  max_date: now.add(60, 'days').toDate(),
+  year_range: [now.year(), now.year() + 1]
+};
 
 const errors = ref<Error>({
   customer_name: '',
@@ -168,57 +185,69 @@ function resetErrors() {
                       :error="errors.address"
           ></text-input>
           <div class="space-y-2">
-            <label>Time</label>
-            <div class="grid grid-cols-2 gap-4">
-              <div class="flex flex-col space-y-2">
-                <label class="text-stale-400 px-1">Start</label>
-                <input v-model="form.start_at"
-                       class="border border-stale-400 rounded-lg py-1 px-3 "
-                >
-              </div>
-              <div class="flex flex-col space-y-2">
-                <label class="text-stale-400 px-1">End</label>
-                <input v-model="form.end_at"
-                       class="border border-stale-400 rounded-lg py-1 px-3 "
-                >
-              </div>
+            <label>Date and Time</label>
+            <div class="flex flex-row items-center gap-4">
+              <VueDatePicker v-model="form.start_at"
+                             :min-date="reservationDatepickerConfig.min_date"
+                             :max-date="reservationDatepickerConfig.max_date"
+                             :year-range="reservationDatepickerConfig.year_range"
+                             :is24="false"
+                             auto-apply
+                             prevent-min-max-navigation
+                             input-class-name="py-2"
+              ></VueDatePicker>
+            </div>
+            <div class="flex flex-row items-center gap-4">
+              <error-message :error="errors.start_at"></error-message>
+              <error-message :error="errors.end_at"></error-message>
             </div>
           </div>
 
-          <div class="space-y-2">
-            <label>Children</label>
-            <div class="flex flex-col ">
-              <template v-for="(child, index) in form.children"
-                        :key="`children-${index}`"
-              >
-                <div class="grid grid-cols-7 items-end space-x-4">
-                  <text-input v-model="form.children[index].name"
-                              label="Name"
-                              :name="`child_${index}_name`"
-                              :error="errors.children?.[index]?.name"
-                              class="col-span-4"
-                  ></text-input>
+        </div>
+      </div>
 
-                  <text-input v-model="form.children[index].date_of_birth"
-                              label="Date of Birth"
-                              :name="`child_${index}_date_of_birth`"
-                              :error="errors.children?.[index]?.date_of_birth"
-                              class="col-span-2"
-                  ></text-input>
+      <div class="py-8">
+        <h2 class="font-medium mb-4">
+          Children
+        </h2>
 
-                  <div class="col-span-1 flex justify-end">
-                    <button v-if="index === form.children.length - 1"
-                            @click.prevent="addChild"
-                            class="p-4 bg-green-500 rounded-lg text-2xl text-white"> +
-                    </button>
-                  </div>
-                </div>
-              </template>
-
+        <div class="flex flex-col ">
+          <div v-for="(child, index) in form.children"
+               :key="`children-${index}`"
+               class="flex flex-row space-x-4"
+          >
+            <text-input v-model="form.children[index].name"
+                        label="Name"
+                        :name="`child_${index}_name`"
+                        :error="errors.children?.[index]?.name"
+                        class="w-full"
+            ></text-input>
+            <form-group label="Date of Birth"
+                        :name="`child_${index}_date_of_birth`"
+                        :error="errors.children?.[index]?.date_of_birth"
+                        class="w-full"
+            >
+              <VueDatePicker v-model="form.children[index].date_of_birth"
+                             :enable-time-picker="false"
+                             :min-date="childrenDateOfBirthDatepickerConfig.min_date"
+                             :max-date="childrenDateOfBirthDatepickerConfig.max_date"
+                             :start-date="childrenDateOfBirthDatepickerConfig.preselected_date"
+                             :year-range="childrenDateOfBirthDatepickerConfig.year_range"
+                             auto-apply
+                             prevent-min-max-navigation
+              ></VueDatePicker>
+            </form-group>
+            <div>
+              <button v-if="index === form.children.length - 1"
+                      @click.prevent="addChild"
+                      class="p-4 bg-green-500 rounded-lg text-2xl text-white"> +
+              </button>
             </div>
+
           </div>
         </div>
       </div>
+
     </div>
 
 
