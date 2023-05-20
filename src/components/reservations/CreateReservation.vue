@@ -25,12 +25,14 @@ interface Error {
   address: string
   start_at: string
   end_at: string,
-  children: ChildError[]
+  children?: {
+    [childIndex: number]: ChildError;
+  };
 }
 
 interface ChildError {
-  name: string,
-  date_of_birth: string
+  name?: string;
+  date_of_birth?: string;
 }
 
 const now = dayjs();
@@ -92,24 +94,26 @@ function addChild() {
 }
 
 function handleValidationErrorMessages(errorMessages) {
-  const fieldMappings = {
-    customer_name: 'customer_name',
-    customer_phone: 'customer_phone',
-    address: 'address',
-    start_at: 'start_at',
-    children: 'children'
-  };
+  errors.value.customer_name = errorMessages.customer_name?.[0] ?? null;
+  errors.value.customer_phone = errorMessages.customer_phone?.[0] ?? null;
+  errors.value.address = errorMessages.address?.[0] ?? null;
+  errors.value.start_at = errorMessages.start_at?.[0] ?? null;
+  errors.value.end_at = errorMessages.end_at?.[0] ?? null;
 
-  Object.entries(errorMessages).forEach(([key, value]) => {
-    const field = fieldMappings[key];
-    if (field) {
-      errors.value[field] = value[0];
+  const childrenErrors = {};
+  Object.keys(errorMessages).forEach((key) => {
+    if (key.startsWith('children.')) {
+      const childIndex = key.split('.')[1];
+      const childField = key.split('.')[2];
+
+      if (!childrenErrors[childIndex]) {
+        childrenErrors[childIndex] = {};
+      }
+
+      childrenErrors[childIndex][childField] = errorMessages[key][0];
     }
   });
-
-  console.log({
-    errors: errors.value
-  })
+  errors.value.children = childrenErrors;
 }
 
 function resetErrors() {
@@ -188,20 +192,20 @@ function resetErrors() {
                         :key="`children-${index}`"
               >
                 <div class="grid grid-cols-7 items-end space-x-4">
-                  <text-input v-model="form.address"
+                  <text-input v-model="form.children[index].name"
                               label="Name"
                               :name="`child_${index}_name`"
-                              :error="errors.children[index]?.name"
+                              :error="errors.children?.[index]?.name"
                               class="col-span-4"
                   ></text-input>
 
-                  <div class="flex flex-col space-y-2 col-span-2  w-full">
-                    <label class="text-stale-400 px-1">Date of Birth</label>
-                    <input type="number"
-                           v-model="child.date_of_birth"
-                           class="border border-stale-400 rounded-lg py-1 px-3 "
-                    >
-                  </div>
+                  <text-input v-model="form.children[index].date_of_birth"
+                              label="Date of Birth"
+                              :name="`child_${index}_date_of_birth`"
+                              :error="errors.children?.[index]?.date_of_birth"
+                              class="col-span-2"
+                  ></text-input>
+
                   <div class="col-span-1 flex justify-end">
                     <button v-if="index === form.children.length - 1"
                             @click.prevent="addChild"
