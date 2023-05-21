@@ -8,6 +8,7 @@ import VueDatePicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css'
 import ErrorMessage from "@/components/form/ErrorMessage.vue";
 import FormGroup from "@/components/form/FormGroup.vue";
+import router from "@/router";
 
 interface Form {
   customer_name: string;
@@ -91,14 +92,23 @@ async function handleSubmit() {
 
   try {
     const response = await axios.post(`${apiUrl}/reservations`, form);
-    console.log({response})
-    return response.data;
+    console.log({
+      response,
+      status: response.status,
+      refNo: response.data.data.reference_number
+    })
+    if (response.status === 201) {
+      router.push({
+        name: 'reservations.show',
+        params: {reservationRefNo: response.data.data.reference_number}
+      });
+    }
+
   } catch (error) {
-    if (error.response.status === 422) {
-      console.log({
-        messages: error.response.data.errors
-      })
+    if (error.response && error.response.status === 422) {
       handleValidationErrorMessages(error.response.data.errors);
+    } else {
+      console.log(error); // Handle other errors accordingly
     }
   }
 }
