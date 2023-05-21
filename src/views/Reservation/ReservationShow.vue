@@ -29,7 +29,7 @@ async function findReservation() {
       reservation.value = {
         customer_name: data.customer_name,
         customer_phone: data.customer_phone,
-        start_at: data.start_at ? dayjs(data.start_at).format('YYYY-MM-DD hh:mm A') : null,
+        start_at: data.start_at ? dayjs(data.start_at).format('DD MMMM YYYY hh:mm A') : null,
         address: data.address,
         children: data.children
       }
