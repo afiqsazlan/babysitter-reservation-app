@@ -24,7 +24,7 @@ defineEmits(['update:modelValue'])
     <input :id="name"
            :value="modelValue"
            :type="type || 'text'"
-           @input="$emit('update:modelValue', $event.target.value)"
+           @input="$emit('update:modelValue', ($event.target as HTMLInputElement)?.value)"
            class="border border-stale-400 rounded-lg py-2 px-3 "
     />
 

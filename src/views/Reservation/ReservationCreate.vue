@@ -2,7 +2,7 @@
 
 import dayjs from 'dayjs';
 import {reactive, ref} from "vue";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import TextInput from "@/components/form/TextInput.vue";
 import VueDatePicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css'
@@ -104,11 +104,13 @@ async function handleSubmit() {
       });
     }
 
-  } catch (error) {
-    if (error.response && error.response.status === 422) {
-      handleValidationErrorMessages(error.response.data.errors);
+  } catch (error: unknown) {
+    if (isAxiosError(error)) {
+      if (error.response && error.response.status === 422) {
+        handleValidationErrorMessages(error.response.data.errors);
+      }
     } else {
-      console.log(error); // Handle other errors accordingly
+      console.log(error);
     }
   }
 }
@@ -118,6 +120,10 @@ function addChild() {
     name: '',
     date_of_birth: null
   })
+}
+
+function isAxiosError(error: unknown): error is AxiosError {
+  return (error as AxiosError).isAxiosError !== undefined;
 }
 
 function removeChild(index) {

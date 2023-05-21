@@ -1,29 +1,43 @@
 <script setup lang="ts">
 import {useRoute} from 'vue-router';
-import axios from "axios";
-import {onMounted, ref} from "vue";
+import axios, {AxiosResponse} from "axios";
+import {onMounted, ref, computed} from "vue";
 import dayjs from "dayjs";
 
 const route = useRoute();
 
-const reservationRefNo = route.params.reservationRefNo;
+interface Reservation {
+  customer_name: string;
+  customer_phone: string;
+  start_at: string | null;
+  address: string;
+  children: Child[];
+}
+
+interface Child {
+  name: string;
+  age: string;
+}
 
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE;
-const apiUrl = `${apiBaseUrl}/api`
+const reservationRefNo : string = route.params.reservationRefNo;
 
-const reservation = ref({});
+const apiBaseUrl : string = import.meta.env.VITE_API_BASE;
+const apiUrl  : string = `${apiBaseUrl}/api`
 
-async function findReservation() {
+const reservation = ref<Reservation>({});
+const isFetching = ref<boolean>(true);
+
+async function findReservation(): Promise<void> {
 
   axios.defaults.withCredentials = true;
 
   await axios.get(`${apiBaseUrl}/sanctum/csrf-cookie`);
 
   try {
-    const response = await axios.get(`${apiUrl}/reservations/${reservationRefNo}`)
+    const response: AxiosResponse<Reservation> = await axios.get(`${apiUrl}/reservations/${reservationRefNo}`)
     if (response.status === 200) {
-      const data = response.data.data;
+      const data: Reservation = response.data.data;
 
       // Format reservation start time
       reservation.value = {
@@ -33,12 +47,21 @@ async function findReservation() {
         address: data.address,
         children: data.children
       }
-      console.log({reserve: reservation.value})
     }
   } catch (error) {
     console.log({error})
   }
+
+  setIsFetching(false);
 }
+
+function setIsFetching(value = true) {
+  isFetching.value = value;
+}
+
+const noReservationFound = computed<boolean>(() => {
+  return !isFetching.value && Object.keys(reservation.value).length === 0;
+});
 
 onMounted(() => {
   findReservation()
@@ -47,7 +70,14 @@ onMounted(() => {
 
 <template>
   <div class="w-screen  h-screen flex flex-row py-16 justify-center">
-    <div class="border border-slate-400 rounded-lg p-4 md:p-6 w-4/5 md:w-2/3 h-min">
+
+    <div v-if="isFetching">
+      Fetching your reservation...
+    </div>
+    <div v-else-if="noReservationFound">
+      INVALID RESERVATION
+    </div>
+    <div v-else class="border border-slate-400 rounded-lg p-4 md:p-6 w-4/5 md:w-2/3 h-min">
 
       <div class="flex flex-col md:flex-row justify-between md:items-end ">
         <h1 class="font-bold text-xl md:text-2xl">
